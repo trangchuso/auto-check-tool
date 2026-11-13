@@ -1,0 +1,36 @@
+name: Auto Check Accounts
+
+on:
+  schedule:
+    # Tự động chạy mỗi 10 phút một lần
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # Cho phép bấm nút chạy thủ công bất cứ lúc nào trên web GitHub
+
+concurrency:
+  group: sheet-automation
+  cancel-in-progress: false # Đảm bảo nếu đợt cũ chưa chạy xong thì đợt mới sẽ xếp hàng chờ, không chạy đè
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360 # Tối đa 6 tiếng mỗi phiên chạy
+
+    steps:
+      - name: Tải mã nguồn
+        uses: actions/checkout@v4
+
+      - name: Cài đặt Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Cài đặt thư viện
+        run: npm install googleapis playwright
+
+      - name: Cài đặt trình duyệt Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Chạy Tool Lọc Dữ Liệu
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        run: node index.js
